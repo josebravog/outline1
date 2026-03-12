@@ -64,7 +64,7 @@ import {
 import AttachmentHelper from "@server/models/helpers/AttachmentHelper";
 import { DocumentHelper } from "@server/models/helpers/DocumentHelper";
 import { ProsemirrorHelper } from "@server/models/helpers/ProsemirrorHelper";
-import SearchHelper from "@server/models/helpers/SearchHelper";
+import SearchProviderManager from "@server/utils/SearchProviderManager";
 import { TextHelper } from "@server/models/helpers/TextHelper";
 import { authorize, cannot } from "@server/policies";
 import {
@@ -1015,7 +1015,7 @@ router.post(
       collaboratorIds = [userId];
     }
 
-    const documents = await SearchHelper.searchTitlesForUser(user, {
+    const documents = await SearchProviderManager.getProvider().searchTitlesForUser(user, {
       query,
       dateFilter,
       statusFilter,
@@ -1099,7 +1099,7 @@ router.post(
       const team = await share.$get("team");
       invariant(team, "Share must belong to a team");
 
-      response = await SearchHelper.searchForTeam(team, {
+      response = await SearchProviderManager.getProvider().searchForTeam(team, {
         query,
         collectionId: collection?.id || document?.collectionId,
         share,
@@ -1145,7 +1145,7 @@ router.post(
         collaboratorIds = [userId];
       }
 
-      response = await SearchHelper.searchForUser(user, {
+      response = await SearchProviderManager.getProvider().searchForUser(user, {
         query,
         collaboratorIds,
         collectionId,
