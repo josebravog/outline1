@@ -6,7 +6,8 @@ NODE_ENV = "production"
 NODE_OPTIONS = "--openssl-legacy-provider"
 
 [phases.setup]
-nixPkgs = ["nodejs_16", "yarn"]
+# Outline v0.82+ requiere Node >=18 <=20
+nixPkgs = ["nodejs_20", "yarn"]
 
 [phases.install]
 cmds = ["yarn install --frozen-lockfile --network-timeout 1000000"]
