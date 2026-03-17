@@ -5,13 +5,18 @@
   "main": "index.js",
   "scripts": {
     "clean": "rimraf build",
-    "copy:i18n": "mkdir -p ./build/shared/i18n && cp -R ./shared/i18n/locales ./build/shared/i18n",
+    "copy:i18n": "node scripts/copy-i18n.js",
     "build:i18n": "i18next --silent 'shared/**/*.tsx' 'shared/**/*.ts' 'app/**/*.tsx' 'app/**/*.ts' 'server/**/*.ts' 'server/**/*.tsx' && yarn copy:i18n",
-    "build:server": "./build.sh",
+    "build:server": "node scripts/build-server.js",
     "build:webpack": "webpack --config webpack.config.prod.js",
     "build": "yarn clean && yarn build:webpack && yarn build:i18n && yarn build:server",
     "start": "node ./build/server/index.js",
-    "dev": "NODE_ENV=development yarn concurrently -n api,collaboration  -c \"blue,magenta\" \"node --inspect=0.0.0.0 build/server/index.js --services=collaboration,websockets,admin,web,worker\"",
+    "start:web": "yarn start --services=web,websockets,collaboration",
+    "start:worker": "yarn start --services=worker",
+    "dev": "cross-env NODE_ENV=development NODE_OPTIONS=--openssl-legacy-provider DATABASE_URL=postgres://user:pass@127.0.0.1:5432/outline REDIS_URL=redis://127.0.0.1:6379 concurrently -n api,collaboration -c \"blue,magenta\" \"node build/server/index.js --services=collaboration,websockets,admin,web,worker\"",
+    "open": "node scripts/open-browser.js",
+    "dev:setup": "docker-compose up -d && yarn db:migrate && yarn build:server && yarn build:i18n",
+    "login:link": "node build/server/scripts/addUserAndPrintLink.js",
     "dev:watch": "nodemon --exec \"yarn build:server && yarn dev\" -e js,ts,tsx --ignore build/ --ignore app/ --ignore shared/editor",
     "lint": "eslint app server shared",
     "prepare": "husky install",
@@ -22,6 +27,7 @@
     "db:migrate": "sequelize db:migrate",
     "db:rollback": "sequelize db:migrate:undo",
     "db:reset": "sequelize db:drop && sequelize db:create && sequelize db:migrate",
+    "seed": "node build/server/scripts/seed.js",
     "upgrade": "git fetch && git pull && yarn install && yarn heroku-postbuild",
     "test": "jest --config=.jestconfig.json --forceExit",
     "test:app": "jest --config=.jestconfig.json --selectProjects app",
@@ -33,7 +39,7 @@
     "url": "https://github.com/sponsors/outline"
   },
   "engines": {
-    "node": ">= 14 <=16"
+    "node": ">= 14"
   },
   "repository": {
     "type": "git",
@@ -225,6 +231,7 @@
     "zod": "^3.19.1"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "@babel/cli": "^7.10.5",
     "@babel/preset-typescript": "^7.18.6",
     "@getoutline/jest-runner-serial": "^2.0.0",

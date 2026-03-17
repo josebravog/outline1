@@ -3,6 +3,7 @@ import { find, uniqBy } from "lodash";
 import { TeamPreference } from "@shared/types";
 import { parseDomain } from "@shared/utils/domains";
 import env from "@server/env";
+import Logger from "@server/logging/Logger";
 import auth from "@server/middlewares/authentication";
 import { transaction } from "@server/middlewares/transaction";
 import { Event, Team } from "@server/models";
@@ -123,42 +124,58 @@ router.post("auth.config", async (ctx: APIContext) => {
 });
 
 router.post("auth.info", auth(), async (ctx: APIContext) => {
-  const { user } = ctx.state.auth;
-  const sessions = getSessionsInCookie(ctx);
-  const signedInTeamIds = Object.keys(sessions);
+  try {
+    const { user } = ctx.state.auth;
+    const sessions = getSessionsInCookie(ctx);
+    const signedInTeamIds = Object.keys(sessions);
 
-  const [team, signedInTeams, availableTeams] = await Promise.all([
-    Team.scope("withDomains").findByPk(user.teamId, {
-      rejectOnEmpty: true,
-    }),
-    Team.findAll({
-      where: {
-        id: signedInTeamIds,
-      },
-    }),
-    user.availableTeams(),
-  ]);
-
-  await ValidateSSOAccessTask.schedule({ userId: user.id });
-
-  ctx.body = {
-    data: {
-      user: presentUser(user, {
-        includeDetails: true,
+    const [team, signedInTeams, availableTeams] = await Promise.all([
+      Team.scope("withDomains").findByPk(user.teamId, {
+        rejectOnEmpty: true,
       }),
-      team: presentTeam(team),
-      availableTeams: uniqBy(
-        [...signedInTeams, ...availableTeams],
-        "id"
-      ).map((team) =>
-        presentAvailableTeam(
-          team,
-          signedInTeamIds.includes(team.id) || team.id === user.teamId
-        )
-      ),
-    },
-    policies: presentPolicies(user, [team]),
-  };
+      Team.findAll({
+        where: {
+          id: signedInTeamIds,
+        },
+      }),
+      user.availableTeams(),
+    ]);
+
+    try {
+      await ValidateSSOAccessTask.schedule({ userId: user.id });
+    } catch (queueErr) {
+      // No fallar el login si Redis/cola no está disponible
+      Logger.warn(
+        "auth",
+        "ValidateSSOAccessTask.schedule failed (queue/Redis?), continuing",
+        queueErr
+      );
+    }
+
+    ctx.body = {
+      data: {
+        user: presentUser(user, {
+          includeDetails: true,
+        }),
+        team: presentTeam(team),
+        availableTeams: uniqBy(
+          [...signedInTeams, ...availableTeams],
+          "id"
+        ).map((team) =>
+          presentAvailableTeam(
+            team,
+            signedInTeamIds.includes(team.id) || team.id === user.teamId
+          )
+        ),
+      },
+      policies: presentPolicies(user, [team]),
+    };
+  } catch (err) {
+    if (env.ENVIRONMENT === "development") {
+      Logger.error("auth.info failed", err);
+    }
+    throw err;
+  }
 });
 
 router.post("auth.delete", auth(), transaction(), async (ctx: APIContext) => {

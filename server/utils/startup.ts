@@ -5,65 +5,6 @@ import Logger from "@server/logging/Logger";
 import AuthenticationProvider from "@server/models/AuthenticationProvider";
 import Team from "@server/models/Team";
 
-export function checkPendingMigrations() {
-  try {
-    const commandResult = execSync(
-      `yarn sequelize db:migrate:status${
-        env.PGSSLMODE === "disable" ? " --env=production-ssl-disabled" : ""
-      }`
-    );
-    const commandResultArray = Buffer.from(commandResult)
-      .toString("utf-8")
-      .split("\n");
-
-    const pendingMigrations = commandResultArray.filter((line) =>
-      line.startsWith("down")
-    );
-
-    if (pendingMigrations.length) {
-      Logger.warn("You have pending migrations");
-      Logger.warn(
-        pendingMigrations
-          .map((line, i) => `${i + 1}. ${line.replace("down ", "")}`)
-          .join("\n")
-      );
-      Logger.warn(
-        "Please run `yarn db:migrate` or `yarn db:migrate --env production-ssl-disabled` to run all pending migrations"
-      );
-
-      process.exit(1);
-    }
-  } catch (err) {
-    if (err.message.includes("ECONNREFUSED")) {
-      Logger.warn(
-        `Could not connect to the database. Please check your connection settings.`
-      );
-    } else {
-      Logger.warn(err.message);
-    }
-    process.exit(1);
-  }
-}
-
-export async function checkMigrations() {
-  if (env.DEPLOYMENT === "hosted") {
-    return;
-  }
-
-  const teams = await Team.count();
-  const providers = await AuthenticationProvider.count();
-
-  if (teams && !providers) {
-    Logger.warn(`
-This version of Outline cannot start until a data migration is complete.
-Backup your database, run the database migrations and the following script:
-
-$ node ./build/server/scripts/20210226232041-migrate-authentication.js
-`);
-    process.exit(1);
-  }
-}
-
 export async function checkEnv() {
   await env.validate().then((errors) => {
     if (errors.length > 0) {
@@ -93,4 +34,67 @@ Is your team enjoying Outline? Consider supporting future development by sponsor
       )} env variable to "production"`
     );
   }
+}
+
+export function checkPendingMigrations() {
+  try {
+    const commandResult = execSync(
+      `yarn sequelize db:migrate:status${
+        env.PGSSLMODE === "disable" ? " --env=production-ssl-disabled" : ""
+      }`
+    );
+    const commandResultArray = Buffer.from(commandResult)
+      .toString("utf-8")
+      .split("\n");
+
+    const pendingMigrations = commandResultArray.filter((line) =>
+      line.startsWith("down")
+    );
+
+    if (pendingMigrations.length) {
+      Logger.warn("You have pending migrations");
+      Logger.warn(
+        pendingMigrations
+          .map((line, i) => `${i + 1}. ${line.replace("down ", "")}`)
+          .join("\n")
+      );
+      Logger.warn(
+        "Please run `yarn db:migrate` or `yarn db:migrate --env production-ssl-disabled` to run all pending migrations"
+      );
+
+      process.exit(1);
+    }
+  } catch (err: any) {
+    if (err?.message?.includes("ECONNREFUSED")) {
+      Logger.warn(
+        `Could not connect to the database. Please check your connection settings.`
+      );
+    } else {
+      Logger.warn(err?.message ?? String(err));
+    }
+    process.exit(1);
+  }
+}
+
+export async function checkMigrations() {
+  if (env.DEPLOYMENT === "hosted") {
+    return;
+  }
+
+  const teams = await Team.count();
+  const providers = await AuthenticationProvider.count();
+
+  // if (teams && !providers) {
+  //   Logger.warn(`
+  // This version of Outline cannot start until a data migration is complete.
+  // Backup your database, run the database migrations and the following script:
+  //
+  // $ node ./build/server/scripts/20210226232041-migrate-authentication.js
+  // `);
+  //   process.exit(1);
+  // }
+
+  // keep for future check
+  void teams;
+  void providers;
 }

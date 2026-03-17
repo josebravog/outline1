@@ -59,7 +59,8 @@ export default function init(app: Koa = new Koa()): Koa {
     const webpack = require("webpack");
     const devMiddleware = require("koa-webpack-dev-middleware");
     const hotMiddleware = require("koa-webpack-hot-middleware");
-    const config = require("../../webpack.config.dev");
+    // From build/server/services/web.js, ../../../ is project root (same as server/ in source)
+const config = require("../../../webpack.config.dev");
     const compile = webpack(config);
 
     /* eslint-enable global-require */

@@ -1,0 +1,20 @@
+[variables]
+NODE_ENV = "production"
+
+# Outline usa webpack@4 en el build; Node 17+ requiere legacy provider.
+# En Node 16 no hace falta, pero lo dejamos para compatibilidad si Railway usa otra versión.
+NODE_OPTIONS = "--openssl-legacy-provider"
+
+[phases.setup]
+nixPkgs = ["nodejs_16", "yarn"]
+
+[phases.install]
+cmds = ["yarn install --frozen-lockfile --network-timeout 1000000"]
+
+[phases.build]
+cmds = ["yarn build"]
+
+[start]
+# En Railway, para el servicio WEB usa `yarn start:web`
+cmd = "yarn start:web"
+

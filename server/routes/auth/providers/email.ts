@@ -7,6 +7,7 @@ import SigninEmail from "@server/emails/templates/SigninEmail";
 import WelcomeEmail from "@server/emails/templates/WelcomeEmail";
 import env from "@server/env";
 import { AuthorizationError } from "@server/errors";
+import Logger from "@server/logging/Logger";
 import { rateLimiter } from "@server/middlewares/rateLimiter";
 import { User, Team } from "@server/models";
 import { RateLimiterStrategy } from "@server/utils/RateLimiter";
@@ -76,14 +77,25 @@ router.post(
     }
 
     // send email to users registered address with a short-lived token
+    const clientType = client === Client.Desktop ? Client.Desktop : Client.Web;
+    const token = user.getEmailSigninToken();
     await SigninEmail.schedule({
       to: user.email,
-      token: user.getEmailSigninToken(),
+      token,
       teamUrl: team.url,
-      client: client === Client.Desktop ? Client.Desktop : Client.Web,
+      client: clientType,
     });
     user.lastSigninEmailSentAt = new Date();
     await user.save();
+
+    // En desarrollo sin SMTP el correo no llega a tu bandeja; el enlace se imprime aquí
+    if (env.ENVIRONMENT === "development" && !env.SMTP_HOST) {
+      const signInLink = `${env.URL}/auth/email.callback?token=${token}&client=${clientType}`;
+      Logger.info(
+        "email",
+        `[DEV] Enlace de inicio de sesión (cópialo en el navegador): ${signInLink}`
+      );
+    }
 
     // respond with success regardless of whether an email was sent
     ctx.body = {
