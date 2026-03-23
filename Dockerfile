@@ -1,3 +1,4 @@
+ARG CACHE_BUST=1774242280
 ARG APP_PATH=/opt/outline
 
 FROM node:20-alpine AS builder
