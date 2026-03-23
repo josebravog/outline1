@@ -1,12 +1,14 @@
-ARG CACHE_BUST=1774242280
+ARG CACHE_BUST=2
 ARG APP_PATH=/opt/outline
 
 FROM node:20-alpine AS builder
 ARG APP_PATH
 WORKDIR $APP_PATH
 
-COPY package.json yarn.lock ./
-RUN corepack enable && yarn install --frozen-lockfile --network-timeout 100000
+RUN corepack enable
+
+COPY package.json yarn.lock .yarnrc.yml ./
+RUN yarn install --frozen-lockfile --network-timeout 100000
 
 COPY . .
 RUN yarn build
@@ -30,4 +32,3 @@ RUN addgroup -g 1001 -S nodejs && \
 USER nodejs
 EXPOSE 3000
 CMD ["yarn", "start"]
-
