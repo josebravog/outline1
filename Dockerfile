@@ -1,4 +1,4 @@
-ARG CACHE_BUST=3
+ARG CACHE_BUST=4
 ARG APP_PATH=/opt/outline
 
 FROM node:20-alpine AS builder
@@ -26,6 +26,9 @@ COPY --from=builder $APP_PATH/public ./public
 COPY --from=builder $APP_PATH/.sequelizerc ./.sequelizerc
 COPY --from=builder $APP_PATH/node_modules ./node_modules
 COPY --from=builder $APP_PATH/package.json ./package.json
+COPY --from=builder $APP_PATH/yarn.lock ./yarn.lock
+COPY --from=builder $APP_PATH/.yarnrc.yml ./.yarnrc.yml
+COPY --from=builder $APP_PATH/.yarn ./.yarn
 
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 && \
