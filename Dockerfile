@@ -6,7 +6,7 @@ ARG APP_PATH
 WORKDIR $APP_PATH
 
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile --network-timeout 100000
+RUN corepack enable && yarn install --frozen-lockfile --network-timeout 100000
 
 COPY . .
 RUN yarn build
@@ -30,3 +30,4 @@ RUN addgroup -g 1001 -S nodejs && \
 USER nodejs
 EXPOSE 3000
 CMD ["yarn", "start"]
+
