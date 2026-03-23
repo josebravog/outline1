@@ -1,4 +1,4 @@
-ARG CACHE_BUST=2
+ARG CACHE_BUST=3
 ARG APP_PATH=/opt/outline
 
 FROM node:20-alpine AS builder
@@ -17,6 +17,8 @@ FROM node:20-alpine AS runner
 ARG APP_PATH
 WORKDIR $APP_PATH
 ENV NODE_ENV=production
+
+RUN corepack enable
 
 COPY --from=builder $APP_PATH/build ./build
 COPY --from=builder $APP_PATH/server ./server
