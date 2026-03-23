@@ -4,7 +4,7 @@ import type { AppState, AppContext } from "@server/types";
 const router = new Router<AppState, AppContext>();
 
 router.post("ai.answer", async (ctx) => {
-  const { question } = ctx.request.body;
+  const { question } = ctx.input?.body ?? ctx.request.body;
 
   ctx.body = {
     data: {
