@@ -15,8 +15,8 @@ type AnswerResult = {
 
 class OpenAIService {
   async answer(params: AnswerParams): Promise<AnswerResult> {
-    const apiKey = (env as any).OPENAI_API_KEY;
-    const vectorStoreId = (env as any).OPENAI_VECTOR_STORE_ID;
+    const apiKey = env.OPENAI_API_KEY;
+    const vectorStoreId = env.OPENAI_VECTOR_STORE_ID;
 
     if (!apiKey) {
       throw new Error("OPENAI_API_KEY no está configurado");
@@ -62,9 +62,7 @@ class OpenAIService {
         )
         ?.join("") ?? "No se pudo generar una respuesta.";
 
-    const sources: string[] = [];
-
-    return { answer, sources };
+    return { answer, sources: [] };
   }
 }
 

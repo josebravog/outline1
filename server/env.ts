@@ -886,6 +886,9 @@ export class Environment {
    * @param value The string to convert
    * @returns A boolean or undefined
    */
+
+  public OPENAI_API_KEY = this.toOptionalString(process.env.OPENAI_API_KEY);
+  public OPENAI_VECTOR_STORE_ID = this.toOptionalString(process.env.OPENAI_VECTOR_STORE_ID);
   protected toOptionalBoolean(value: string | undefined) {
     try {
       return value ? !!JSON.parse(value) : undefined;
@@ -896,3 +899,4 @@ export class Environment {
 }
 
 export default new Environment();
+
