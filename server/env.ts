@@ -14,6 +14,7 @@ import {
   IsIn,
   IsEmail,
   IsBoolean,
+  IsString,
 } from "class-validator";
 import uniq from "lodash/uniq";
 import { languages } from "@shared/i18n";
@@ -887,7 +888,12 @@ export class Environment {
    * @returns A boolean or undefined
    */
 
+  @IsOptional()
+  @IsString()
   public OPENAI_API_KEY = this.toOptionalString(process.env.OPENAI_API_KEY);
+
+  @IsOptional()
+  @IsString()
   public OPENAI_VECTOR_STORE_ID = this.toOptionalString(process.env.OPENAI_VECTOR_STORE_ID);
   protected toOptionalBoolean(value: string | undefined) {
     try {

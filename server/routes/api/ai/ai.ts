@@ -42,7 +42,12 @@ const router = new Router<AppState, AppContext>();
 router.post("ai.answer", async (ctx) => {
   try {
     const { question, collectionId, documentId } = ctx.request.body;
-    const { user } = ctx.state.auth;
+    Usa esto(más seguro):
+    const user = ctx.state.auth?.user;
+
+    if (!user) {
+      ctx.throw(401, "Debes estar autenticado para usar la IA");
+    }
 
     const result = await OpenAIService.answer({
       question,

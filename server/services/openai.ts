@@ -1,69 +1,24 @@
-import env from "@server/env";
+import OpenAI from "openai";
+import env from "../env";
 
-type AnswerParams = {
-  question: string;
-  collectionId?: string;
-  documentId?: string;
-  userId: string;
-  teamId: string;
-};
+const openai = new OpenAI({
+  apiKey: env.OPENAI_API_KEY,
+});
 
-type AnswerResult = {
-  answer: string;
-  sources: string[];
-};
-
-class OpenAIService {
-  async answer(params: AnswerParams): Promise<AnswerResult> {
-    const apiKey = env.OPENAI_API_KEY;
-    const vectorStoreId = env.OPENAI_VECTOR_STORE_ID;
-
-    if (!apiKey) {
-      throw new Error("OPENAI_API_KEY no está configurado");
-    }
-
-    const body: any = {
-      model: "gpt-4o-mini",
-      input: params.question,
-    };
-
-    if (vectorStoreId) {
-      body.tools = [
-        {
-          type: "file_search",
-          vector_store_ids: [vectorStoreId],
-        },
-      ];
-    }
-
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(body),
+export async function getAiAnswer(userQuestion: string) {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini", // Modelo económico y potente
+      messages: [
+        { role: "system", content: "Eres un asistente útil integrado en un Wiki de Outline." },
+        { role: "user", content: userQuestion },
+      ],
+      temperature: 0.7,
     });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`OpenAI API error: ${error}`);
-    }
-
-    const data = await response.json();
-
-    const answer =
-      data.output
-        ?.filter((o: any) => o.type === "message")
-        ?.flatMap((o: any) =>
-          o.content
-            ?.filter((c: any) => c.type === "output_text")
-            ?.map((c: any) => c.text)
-        )
-        ?.join("") ?? "No se pudo generar una respuesta.";
-
-    return { answer, sources: [] };
+    return response.choices[0].message.content || "No recibí respuesta de la IA.";
+  } catch (error) {
+    console.error("Error en OpenAI Service:", error);
+    throw new Error("Error al conectar con OpenAI");
   }
 }
-
-export default new OpenAIService();
