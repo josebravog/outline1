@@ -857,6 +857,19 @@ protected toOptionalBoolean(value: string | undefined) {
     return undefined;
   }
 }
+/**
+ * OpenAI API key for AI features.
+ */
+@IsString()
+@IsOptional()
+public OPENAI_API_KEY = this.toOptionalString(environment.OPENAI_API_KEY);
+
+/**
+ * OpenAI Vector Store ID for document search.
+ */
+@IsString()
+@IsOptional()
+public OPENAI_VECTOR_STORE_ID = this.toOptionalString(environment.OPENAI_VECTOR_STORE_ID);
 }
 
 export default new Environment();
