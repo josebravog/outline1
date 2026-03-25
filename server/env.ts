@@ -33,9 +33,6 @@ export class Environment {
   constructor() {
     PublicEnvironmentRegister.registerEnv(this);
   }
-  constructor() {
-    PublicEnvironmentRegister.registerEnv(this);
-  }
 
   /**
    * The environment the server is running in.
