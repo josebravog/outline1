@@ -43,7 +43,6 @@ export class Environment {
   @Public
   @IsIn(["development", "production", "staging", "test"])
   public ENVIRONMENT = environment.NODE_ENV ?? "production";
-  */
 @IsHexadecimal()
 @Length(64, 64, {
   message: `The SECRET_KEY environment variable must be exactly 64 hexadecimal characters (Use \`openssl rand -hex 32\` to generate a value).`,
