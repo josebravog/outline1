@@ -33,7 +33,12 @@ export class Environment {
   constructor() {
     PublicEnvironmentRegister.registerEnv(this);
   }
-
+  /**
+     * Returns an object consisting of env vars annotated with `@Public` decorator
+     */
+  get public() {
+    return PublicEnvironmentRegister.getEnv();
+  }
   /**
    * The environment the server is running in.
    */
