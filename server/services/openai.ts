@@ -1,8 +1,9 @@
 import OpenAI from "openai";
 import env from "@server/env";
 
-const openai = new OpenAI({
-  apiKey: env.OPENAI_API_KEY,
+const groq = new OpenAI({
+  apiKey: (env as any).GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1",
 });
 
 interface AnswerOptions {
@@ -18,38 +19,23 @@ export interface AiAnswer {
 
 class OpenAIService {
   async answer({ question }: AnswerOptions): Promise<AiAnswer> {
-    const response = await openai.responses.create({
-      model: "gpt-4o-mini",
-      input: question,
-      tools: [
+    const response = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
         {
-          type: "file_search",
-          vector_store_ids: [env.OPENAI_VECTOR_STORE_ID ?? ""],
+          role: "system",
+          content: "Eres un asistente de conocimiento integrado en Outline, una wiki colaborativa. Responde en el mismo idioma que la pregunta.",
+        },
+        {
+          role: "user",
+          content: question,
         },
       ],
     });
 
-    const answer =
-      response.output
-        .filter((b: any) => b.type === "message")
-        .flatMap((b: any) => b.content)
-        .filter((c: any) => c.type === "output_text")
-        .map((c: any) => c.text)
-        .join("\n") || "No se encontró respuesta.";
+    const answer = response.choices[0]?.message?.content ?? "No se pudo generar una respuesta.";
 
-    const citations =
-      response.output
-        .filter((b: any) => b.type === "message")
-        .flatMap((b: any) => b.content)
-        .filter((c: any) => c.type === "output_text")
-        .flatMap((c: any) => c.annotations ?? [])
-        .filter((a: any) => a.type === "file_citation")
-        .map((a: any) => ({
-          filename: a.filename ?? "documento",
-          snippet: a.quote ?? "",
-        })) ?? [];
-
-    return { answer, citations };
+    return { answer, citations: [] };
   }
 }
 
