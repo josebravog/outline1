@@ -14,6 +14,8 @@ export interface AiAnswer {
 
 class OpenAIService {
   async answer({ question }: AnswerOptions): Promise<AiAnswer> {
+    console.log("GROQ_API_KEY presente:", !!env.GROQ_API_KEY, "longitud:", env.GROQ_API_KEY?.length);
+
     const groq = new OpenAI({
       apiKey: env.GROQ_API_KEY,
       baseURL: "https://api.groq.com/openai/v1",
