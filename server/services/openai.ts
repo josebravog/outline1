@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import env from "@server/env";
 
 const groq = new OpenAI({
-  apiKey: (env as any).GROQ_API_KEY,
+  apiKey: env.GROQ_API_KEY,
   baseURL: "https://api.groq.com/openai/v1",
 });
 
