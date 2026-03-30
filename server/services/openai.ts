@@ -7,26 +7,42 @@ interface AnswerOptions {
   teamId: string;
 }
 
+interface IndexDocumentOptions {
+  id: string;
+  title: string;
+  text: string;
+  collectionId: string | null;
+}
+
 export interface AiAnswer {
   answer: string;
   citations: Array<{ filename: string; snippet: string }>;
 }
 
 class OpenAIService {
-  async answer({ question }: AnswerOptions): Promise<AiAnswer> {
-    console.log("GROQ_API_KEY presente:", !!env.GROQ_API_KEY, "longitud:", env.GROQ_API_KEY?.length);
-
-    const groq = new OpenAI({
+  private getGroqClient() {
+    return new OpenAI({
       apiKey: env.GROQ_API_KEY,
       baseURL: "https://api.groq.com/openai/v1",
     });
+  }
+
+  private getOpenAIClient() {
+    return new OpenAI({
+      apiKey: env.OPENAI_API_KEY,
+    });
+  }
+
+  async answer({ question }: AnswerOptions): Promise<AiAnswer> {
+    const groq = this.getGroqClient();
 
     const response = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "system",
-          content: "Eres un asistente de conocimiento integrado en Outline, una wiki colaborativa. Responde en el mismo idioma que la pregunta.",
+          content:
+            "Eres un asistente de conocimiento integrado en Outline, una wiki colaborativa. Responde en el mismo idioma que la pregunta.",
         },
         {
           role: "user",
@@ -35,8 +51,31 @@ class OpenAIService {
       ],
     });
 
-    const answer = response.choices[0]?.message?.content ?? "No se pudo generar una respuesta.";
+    const answer =
+      response.choices[0]?.message?.content ??
+      "No se pudo generar una respuesta.";
     return { answer, citations: [] };
+  }
+
+  async indexDocument(doc: IndexDocumentOptions): Promise<void> {
+    const vectorStoreId = env.OPENAI_VECTOR_STORE_ID;
+    if (!vectorStoreId || !env.OPENAI_API_KEY) {
+      return;
+    }
+
+    const openai = this.getOpenAIClient();
+    const content = `# ${doc.title}\n\n${doc.text}`;
+    const blob = new Blob([content], { type: "text/plain" });
+    const file = new File([blob], `${doc.id}.txt`, { type: "text/plain" });
+
+    const uploaded = await openai.files.create({
+      file,
+      purpose: "assistants",
+    });
+
+    await openai.vectorStores.files.create(vectorStoreId, {
+      file_id: uploaded.id,
+    });
   }
 }
 
