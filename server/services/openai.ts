@@ -1,11 +1,6 @@
 import OpenAI from "openai";
 import env from "@server/env";
 
-const groq = new OpenAI({
-  apiKey: env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
-});
-
 interface AnswerOptions {
   question: string;
   userId: string;
@@ -19,6 +14,11 @@ export interface AiAnswer {
 
 class OpenAIService {
   async answer({ question }: AnswerOptions): Promise<AiAnswer> {
+    const groq = new OpenAI({
+      apiKey: env.GROQ_API_KEY,
+      baseURL: "https://api.groq.com/openai/v1",
+    });
+
     const response = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
@@ -34,7 +34,6 @@ class OpenAIService {
     });
 
     const answer = response.choices[0]?.message?.content ?? "No se pudo generar una respuesta.";
-
     return { answer, citations: [] };
   }
 }
