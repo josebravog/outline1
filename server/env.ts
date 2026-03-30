@@ -858,7 +858,8 @@ protected toOptionalBoolean(value: string | undefined) {
  */
 @IsString()
 @IsOptional()
-public OPENAI_API_KEY = this.toOptionalString(environment.OPENAI_API_KEY);
+public GROQ_API_KEY = this.toOptionalString(process.env.GROQ_API_KEY);
+  public OPENAI_API_KEY = this.toOptionalString(environment.OPENAI_API_KEY);
 
 /**
  * OpenAI Vector Store ID for document search.
@@ -869,3 +870,4 @@ public OPENAI_VECTOR_STORE_ID = this.toOptionalString(environment.OPENAI_VECTOR_
 }
 
 export default new Environment();
+
